@@ -1,4 +1,4 @@
-package main
+package leagueService
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ import (
 )
 
 const amazonURL = "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent"
+const leagueURL = "https://league.com/ca/careers-at-league/jobs/"
 
 // Job holds a subset of fields I care about
 type Job struct {
@@ -75,7 +76,7 @@ func isRecent(job Job) bool {
 	return true
 }
 
-func main() {
+func test() {
 	fmt.Println("Hello World!")
 	resp, err := http.Get(amazonURL)
 	if err != nil {
