@@ -33,12 +33,12 @@ func GetSearchResults() {
 	responseBody := callAPI(amazonURL)
 	jobList := convertToJSONList(responseBody)
 
-	suitableJobs := filter(filter(jobList.Jobs, isSuitable), isRecent)
+	suitableJobs := filter(jobList.Jobs, isRecent, isSuitable)
 	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
 
-	for _, v := range suitableJobs {
-		log.Println(v)
-	}
+	// for _, v := range suitableJobs {
+	// 	log.Println(v)
+	// }
 }
 
 func callAPI(url string) []byte {
@@ -66,12 +66,18 @@ func convertToJSONList(bytes []byte) amazonJobList {
 	return jobList
 }
 
-func filter(vs []amazonJob, f func(amazonJob) bool) []amazonJob {
+// filters based on any number of predicates
+// most restrictive filter (likely to false) should be passed first
+func filter(vs []amazonJob, fs ...func(amazonJob) bool) []amazonJob {
 	vsf := make([]amazonJob, 0)
+OUTER:
 	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
+		for _, f := range fs {
+			if !f(v) {
+				continue OUTER
+			}
 		}
+		vsf = append(vsf, v)
 	}
 	return vsf
 }
