@@ -28,6 +28,44 @@ type amazonJobList struct {
 	Jobs []amazonJob
 }
 
+// GetSearchResults calls Amazon's job search API and applies custom filters to show only relevant job postings
+func GetSearchResults() {
+	responseBody := callAPI(amazonURL)
+	jobList := convertToJSONList(responseBody)
+
+	suitableJobs := filter(filter(jobList.Jobs, isSuitable), isRecent)
+	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
+
+	for _, v := range suitableJobs {
+		log.Println(v)
+	}
+}
+
+func callAPI(url string) []byte {
+	resp, err := http.Get(amazonURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return body
+}
+
+func convertToJSONList(bytes []byte) amazonJobList {
+	if !json.Valid(bytes) {
+		log.Fatal("Not a valid Json")
+	}
+	var jobList amazonJobList
+	err := json.Unmarshal(bytes, &jobList)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return jobList
+}
+
 func filter(vs []amazonJob, f func(amazonJob) bool) []amazonJob {
 	vsf := make([]amazonJob, 0)
 	for _, v := range vs {
@@ -71,31 +109,4 @@ func isRecent(j amazonJob) bool {
 		return false
 	}
 	return true
-}
-
-// GetSearchResults calls Amazon's job search API and applies custom filters to show only relevant job postings
-func GetSearchResults() {
-	resp, err := http.Get(amazonURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if !json.Valid(body) {
-		log.Fatal("Not a valid Json", err)
-	}
-	var jobList amazonJobList
-	err = json.Unmarshal(body, &jobList)
-	log.Printf("Number of jobs detected: %d", len(jobList.Jobs))
-
-	suitableJobs := filter(jobList.Jobs, isSuitable)
-	suitableJobs = filter(suitableJobs, isRecent)
-	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
-
-	for _, v := range suitableJobs {
-		log.Println(v)
-	}
 }
