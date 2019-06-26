@@ -42,7 +42,7 @@ func GetSearchResults() {
 }
 
 func callAPI(url string) []byte {
-	resp, err := http.Get(amazonURL)
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}

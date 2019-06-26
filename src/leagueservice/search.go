@@ -1,17 +1,14 @@
-package leagueService
+package leagueservice
 
 import (
-	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"regexp"
-	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
-const amazonURL = "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent"
 const leagueURL = "https://league.com/ca/careers-at-league/jobs/"
 
 // Job holds a subset of fields I care about
@@ -30,55 +27,39 @@ type JobList struct {
 	Jobs []Job
 }
 
-// Filter job slice based on a predicate func
-func Filter(vs []Job, f func(Job) bool) []Job {
-	vsf := make([]Job, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
+// GetSearchResults does something
+func GetSearchResults() {
+	doc := getDocNode(leagueURL)
+	results := doc.Find(".job-openings__container__jobs__job").
+		FilterFunction(func(i int, s *goquery.Selection) bool {
+			for _, v := range s.Children().Nodes {
+				if v.Data == "h4" && v.FirstChild.Data == "Engineering" {
+					return true
+				}
+			}
+			return false
+		})
+	log.Print(len(results.Nodes))
+	jobsContainer := results.Find(".job-openings__container__jobs--list")
+	filteredJobs := jobsContainer.Children().FilterFunction(func(i int, s *goquery.Selection) bool {
+		return !strings.Contains(s.Text(), "Director") && !strings.Contains(s.Text(), "Senior")
+	})
+	filteredJobs.Each(func(i int, s *goquery.Selection) {
+		link, _ := s.Attr("href")
+		log.Print(link)
+	})
 }
 
-func isSuitable(job Job) bool {
-	// Positions containing these words are generally not suitable
-	if strings.Contains(job.Title, "Manager") ||
-		strings.Contains(job.Title, "Senior") ||
-		strings.Contains(job.Title, "Sr") ||
-		strings.Contains(job.Title, "II") {
-		return false
+func getDocNode(URL string) *goquery.Document {
+	doc, err := goquery.NewDocument(URL)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	// If there is mention of numbers of years, keep it to 3 or less
-	re := regexp.MustCompile(`[4-9]\+? year`)
-	if re.MatchString(job.Qualifications) {
-		return false
-	}
-	return true
+	return doc
 }
 
-func isRecent(job Job) bool {
-	// Make sure job was updated within last 2 months
-	if strings.Contains(job.TimeSinceLastUpdated, "month") {
-		re := regexp.MustCompile(`[0-9]+`)
-		monthString := re.FindString(job.TimeSinceLastUpdated)
-		monthValue, err := strconv.Atoi(monthString)
-		if err != nil {
-			log.Fatal(err)
-		}
-		return monthValue <= 2
-	}
-	// If posting contains the word "year", ignore it
-	if strings.Contains(job.TimeSinceLastUpdated, "year") {
-		return false
-	}
-	return true
-}
-
-func test() {
-	fmt.Println("Hello World!")
-	resp, err := http.Get(amazonURL)
+func callAPI(url string) []byte {
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,18 +68,5 @@ func test() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !json.Valid(body) {
-		log.Fatal("Not a valid Json", err)
-	}
-	var jobList JobList
-	err = json.Unmarshal(body, &jobList)
-	log.Printf("Number of jobs detected: %d", len(jobList.Jobs))
-
-	suitableJobs := Filter(jobList.Jobs, isSuitable)
-	suitableJobs = Filter(suitableJobs, isRecent)
-	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
-
-	for _, v := range suitableJobs {
-		log.Println(v)
-	}
+	return body
 }
