@@ -1,9 +1,7 @@
 package leagueservice
 
 import (
-	"io/ioutil"
 	"log"
-	"net/http"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -39,15 +37,18 @@ func GetSearchResults() {
 			}
 			return false
 		})
-	log.Print(len(results.Nodes))
 	jobsContainer := results.Find(".job-openings__container__jobs--list")
 	filteredJobs := jobsContainer.Children().FilterFunction(func(i int, s *goquery.Selection) bool {
 		return !strings.Contains(s.Text(), "Director") && !strings.Contains(s.Text(), "Senior")
 	})
-	filteredJobs.Each(func(i int, s *goquery.Selection) {
+	listOfURLs := filteredJobs.Map(func(i int, s *goquery.Selection) string {
 		link, _ := s.Attr("href")
-		log.Print(link)
+		return link
 	})
+	log.Print(listOfURLs)
+	for _, v := range listOfURLs {
+		getJobPosting(v)
+	}
 }
 
 func getDocNode(URL string) *goquery.Document {
@@ -58,15 +59,8 @@ func getDocNode(URL string) *goquery.Document {
 	return doc
 }
 
-func callAPI(url string) []byte {
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return body
+func getJobPosting(url string) {
+	doc := getDocNode(url)
+	results := doc.Find("div.section.page-centered").Text()
+	log.Print(results)
 }
