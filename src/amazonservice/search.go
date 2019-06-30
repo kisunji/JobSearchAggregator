@@ -15,6 +15,7 @@ const amazonURL = "https://www.amazon.jobs/en/search.json?base_query=&category[]
 // amazonJob holds a subset of fields I care about
 type amazonJob struct {
 	Title                   string
+	Description             string `json:"description_short"`
 	Qualifications          string `json:"basic_qualifications"`
 	PreferredQualifications string `json:"preferred_qualifications"`
 	DatePosted              string `json:"posted_date"`
