@@ -1,10 +1,12 @@
 package main
 
 import (
+	"log"
+
 	"github.com/kisunji/jobsearchaggregator/jobservice"
 )
 
 func main() {
 	jobservice.AmazonJobs()
-	jobservice.LeagueJobs()
+	log.Print(jobservice.LeagueJobs())
 }

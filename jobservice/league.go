@@ -13,14 +13,16 @@ const (
 )
 
 // LeagueJobs does something
-func LeagueJobs() {
+func LeagueJobs() []Job {
+	var jobArray []Job
 	doc := getDocument(leagueURL)
 	jobs := getJobs(doc)
 	filteredJobs := filterJobs(jobs, strings.Split(wordFilters, ","))
 	listOfURLs := extractURLs(filteredJobs)
 	for _, v := range listOfURLs {
-		getJobPosting(v)
+		jobArray = append(jobArray, getJobPosting(v))
 	}
+	return jobArray
 }
 
 func getDocument(URL string) *goquery.Document {
@@ -67,35 +69,44 @@ func extractURLs(filteredJobs *goquery.Selection) []string {
 		})
 }
 
-func getJobPosting(url string) {
+func getJobPosting(url string) Job {
 	doc := getDocument(url)
-	titleSelection := doc.Find("meta").FilterFunction(
+
+	title := getTitle(doc)
+	description := getDescription(doc)
+	requirementArr := getRequirements(doc)
+	requirements := strings.Join(requirementArr, "<br/>")
+
+	return Job{Title: title, Description: description, Qualifications: requirements, URL: url}
+}
+
+func getTitle(doc *goquery.Document) string {
+	return getFieldFromMeta(doc, "og:title")
+}
+
+func getDescription(doc *goquery.Document) string {
+	return getFieldFromMeta(doc, "og:description")
+}
+
+func getFieldFromMeta(doc *goquery.Document, fieldName string) string {
+	selection := doc.Find("meta").FilterFunction(
 		func(i int, s *goquery.Selection) bool {
 			v, _ := s.Attr("property")
-			return v == "og:title"
+			return v == fieldName
 		})
-	title, ok := titleSelection.Attr("content")
+	field, ok := selection.Attr("content")
 	if !ok {
-		log.Print("No title found")
-		return
+		log.Printf("Field: %s not found", fieldName)
+		return "Field not found"
 	}
-	log.Print(title)
-	descriptionSelection := doc.Find("meta").FilterFunction(
-		func(i int, s *goquery.Selection) bool {
-			v, _ := s.Attr("property")
-			return v == "og:description"
-		})
-	description, ok := descriptionSelection.Attr("content")
-	if !ok {
-		log.Print("No description found")
-	}
-	log.Print(description)
-	requirementSelection := doc.Find("ul.posting-requirements.plain-list > ul > li")
+	return field
+}
+
+func getRequirements(doc *goquery.Document) []string {
 	var requirementArr []string
+	requirementSelection := doc.Find("ul.posting-requirements.plain-list > ul > li")
 	for _, n := range requirementSelection.Nodes {
 		requirementArr = append(requirementArr, n.FirstChild.Data)
 	}
-	requirements := strings.Join(requirementArr, "<br/>")
-	log.Print(requirements)
-
+	return requirementArr
 }
