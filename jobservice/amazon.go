@@ -10,7 +10,10 @@ import (
 	"strings"
 )
 
-const amazonURL = "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent"
+const (
+	amazonURL     = "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent"
+	amazonBaseURL = "https://www.amazon.jobs"
+)
 
 // amazonJob holds a subset of fields I care about
 type amazonJob struct {
@@ -30,16 +33,25 @@ type amazonJobList struct {
 }
 
 // AmazonJobs calls Amazon's job search API and applies custom filters to show only relevant job postings
-func AmazonJobs() {
+func AmazonJobs() []Job {
+	var jobArray []Job
 	responseBody := callAPI(amazonURL)
 	jobList := convertToJSONList(responseBody)
 
 	suitableJobs := filter(jobList.Jobs, isRecent, isSuitable)
 	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
 
-	// for _, v := range suitableJobs {
-	// 	log.Println(v)
-	// }
+	for _, v := range suitableJobs {
+		jobArray = append(jobArray, Job{
+			Company:                 "Amazon",
+			Title:                   v.Title,
+			Qualifications:          v.Qualifications,
+			PreferredQualifications: v.PreferredQualifications,
+			Description:             v.Description,
+			URL:                     amazonBaseURL + v.URL,
+		})
+	}
+	return jobArray
 }
 
 func callAPI(url string) []byte {

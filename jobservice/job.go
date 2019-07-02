@@ -1,7 +1,8 @@
 package jobservice
 
-// Job represents a generic job to be returned by a service
+//Job contains the common set of fields needed for my job search
 type Job struct {
+	Company                 string
 	Title                   string
 	Description             string
 	Qualifications          string
