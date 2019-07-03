@@ -12,7 +12,7 @@ const (
 	wordFilters = "Director,Senior"
 )
 
-// LeagueJobs does something
+// LeagueJobs calls League's careers page and parses results based on specific css selectors
 func LeagueJobs() []Job {
 	var jobArray []Job
 	doc := getDocument(leagueURL)
@@ -75,14 +75,14 @@ func getJobPosting(url string) Job {
 	title := getTitle(doc)
 	description := getDescription(doc)
 	requirementArr := getRequirements(doc)
-	requirements := strings.Join(requirementArr, "<br/>")
 
 	return Job{
 		Company:        "League Inc.",
 		Title:          title,
 		Description:    description,
-		Qualifications: requirements,
-		URL:            url}
+		Qualifications: requirementArr,
+		URL:            url,
+	}
 }
 
 func getTitle(doc *goquery.Document) string {

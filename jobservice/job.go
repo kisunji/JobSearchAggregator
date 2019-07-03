@@ -5,7 +5,7 @@ type Job struct {
 	Company                 string
 	Title                   string
 	Description             string
-	Qualifications          string
-	PreferredQualifications string
+	Qualifications          []string
+	PreferredQualifications []string
 	URL                     string
 }

@@ -42,11 +42,14 @@ func AmazonJobs() []Job {
 	log.Printf("Number of suitable jobs detected: %d", len(suitableJobs))
 
 	for _, v := range suitableJobs {
+		qualifications := processQualifications(v.Qualifications)
+		prefQualifications := processQualifications(v.PreferredQualifications)
+
 		jobArray = append(jobArray, Job{
 			Company:                 "Amazon",
 			Title:                   v.Title,
-			Qualifications:          v.Qualifications,
-			PreferredQualifications: v.PreferredQualifications,
+			Qualifications:          qualifications,
+			PreferredQualifications: prefQualifications,
 			Description:             v.Description,
 			URL:                     amazonBaseURL + v.URL,
 		})
@@ -121,11 +124,30 @@ func isRecent(j amazonJob) bool {
 		if err != nil {
 			log.Fatal(err)
 		}
-		return monthValue <= 2
+		return monthValue <= 1
 	}
 	// If posting contains the word "year", ignore it
 	if strings.Contains(j.TimeSinceLastUpdated, "year") {
 		return false
 	}
 	return true
+}
+
+func processQualifications(rawQualifications string) []string {
+	var result []string
+
+	// Trim unwanted bullet rune from raw string
+	q := strings.Replace(rawQualifications, "·", "", -1)
+	// Since amazon's api returns strings laced with <br/>, use the tags to split into array
+	qs := strings.Split(q, "<br/>")
+
+	for _, q := range qs {
+		q = strings.TrimSpace(q)
+		// trimmed string should not:
+		// be empty, be a hashtag, be disclaimer
+		if !(len(q) == 0 || strings.HasPrefix(q, "#") || strings.HasPrefix(q, "Amazon is an")) {
+			result = append(result, q)
+		}
+	}
+	return result
 }
