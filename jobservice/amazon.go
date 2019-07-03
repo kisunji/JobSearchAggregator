@@ -136,7 +136,7 @@ func processQualifications(rawQualifications string) []string {
 	var result []string
 
 	// Trim unwanted bullet rune from raw string
-	q := strings.Replace(rawQualifications, "•", "", -1)
+	q := strings.Replace(rawQualifications, "·", "", -1)
 	// Since amazon's api returns strings laced with <br/>, use the tags to split into array
 	qs := strings.Split(q, "<br/>")
 
