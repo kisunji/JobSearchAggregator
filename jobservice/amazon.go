@@ -85,6 +85,7 @@ func convertToJSONList(bytes []byte) amazonJobList {
 // most restrictive filter (likely to false) should be passed first
 func filter(vs []amazonJob, fs ...func(amazonJob) bool) []amazonJob {
 	vsf := make([]amazonJob, 0)
+	// TODO: Could replace inner loop with goroutines
 OUTER:
 	for _, v := range vs {
 		for _, f := range fs {
@@ -136,7 +137,8 @@ func processQualifications(rawQualifications string) []string {
 	var result []string
 
 	// Trim unwanted bullet rune from raw string
-	q := strings.Replace(rawQualifications, "·", "", -1)
+	r := strings.NewReplacer("·", "", "*", "", "•", "")
+	q := r.Replace(rawQualifications)
 	// Since amazon's api returns strings laced with <br/>, use the tags to split into array
 	qs := strings.Split(q, "<br/>")
 
