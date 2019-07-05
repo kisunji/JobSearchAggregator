@@ -56,6 +56,7 @@ func LocalHandler(w http.ResponseWriter, req *http.Request) {
 	bytes, err := getJobs()
 	if err != nil {
 		http.Error(w, "Error occurred", http.StatusInternalServerError)
+		return
 	}
 	w.Write(bytes)
 }
