@@ -48,7 +48,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(bytes),
-		Headers:    map[string]string{"Access-Control-Allow-Origin": "chriskim.dev"},
+		Headers:    map[string]string{"Access-Control-Allow-Origin": "https://www.chriskim.dev"},
 	}, nil
 }
 
