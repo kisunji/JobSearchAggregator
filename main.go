@@ -48,11 +48,13 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(bytes),
+		Headers:    map[string]string{"Access-Control-Allow-Origin": "chriskim.dev"},
 	}, nil
 }
 
 // LocalHandler handles requests for local testing
 func LocalHandler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	bytes, err := getJobs()
 	if err != nil {
 		http.Error(w, "Error occurred", http.StatusInternalServerError)

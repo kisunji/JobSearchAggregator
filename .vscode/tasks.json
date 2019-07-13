@@ -11,6 +11,16 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "Update function",
+            "type": "shell",
+            "command": "aws lambda update-function-code --function-name JobSearch --zip-file fileb://main.zip"
+        },
+        {
+            "label": "Zip main",
+            "type": "shell",
+            "command": "%USERPROFILE%\\Go\\Bin\\build-lambda-zip.exe -o main.zip main"
         }
     ]
 }
