@@ -12,6 +12,8 @@ Started this project to learn golang and to save time while job searching
 
 This application will use go http server on port 80 by default. You can set the following environment variables:
 
-`MODE=lambda` app will use aws-lambda-go's handler
+`MODE=lambda` if specified, app will use aws-lambda-go's handler
 
 `PORT=8080` set custom port number (only if not running on MODE=lambda)
+
+`CORS=https://yoururlhere.com` set custom origin cor CORS (default is "*")

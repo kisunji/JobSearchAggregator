@@ -45,16 +45,24 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, ErrJobService
 	}
+	origin, ok := os.LookupEnv("CORS")
+	if !ok {
+		origin = "*"
+	}
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body:       string(bytes),
-		Headers:    map[string]string{"Access-Control-Allow-Origin": "https://www.chriskim.dev"},
+		Headers:    map[string]string{"Access-Control-Allow-Origin": origin},
 	}, nil
 }
 
 // LocalHandler handles requests for local testing
 func LocalHandler(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	origin, ok := os.LookupEnv("CORS")
+	if !ok {
+		origin = "*"
+	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
 	bytes, err := getJobs()
 	if err != nil {
 		http.Error(w, "Error occurred", http.StatusInternalServerError)
