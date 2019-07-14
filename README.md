@@ -16,4 +16,4 @@ This application will use go http server on port 80 by default. You can set the 
 
 `PORT=8080` set custom port number (only if not running on MODE=lambda)
 
-`CORS=https://yoururlhere.com` set custom origin cor CORS (default is "*")
+`CORS=https://yoururlhere.com` set custom origin for CORS (default is "*")
