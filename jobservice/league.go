@@ -9,7 +9,7 @@ import (
 
 const (
 	leagueURL   = "https://league.com/ca/careers-at-league/jobs/"
-	wordFilters = "Director,Senior"
+	wordFilters = "Director,Senior,Manager"
 )
 
 // LeagueJobs calls League's careers page and parses results based on specific css selectors
