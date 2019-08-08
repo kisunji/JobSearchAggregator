@@ -107,8 +107,8 @@ func isSuitable(j amazonJob) bool {
 		return false
 	}
 
-	// If there is mention of numbers of years, keep it to 3 or less
-	re := regexp.MustCompile(`[4-9]\+? year`)
+	// If there is mention of numbers of years, keep it to 2 or less
+	re := regexp.MustCompile(`[3-9]\+? [Yy]ear`)
 	if re.MatchString(j.Qualifications) {
 		return false
 	}
