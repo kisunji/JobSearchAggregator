@@ -7,25 +7,34 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const (
-	leagueURL   = "https://league.com/ca/careers-at-league/jobs/"
-	wordFilters = "Director,Senior,Manager"
-)
+// LeagueSearch holds the base search URL and an array of words to filter
+type LeagueSearch struct {
+	URL         string
+	wordFilters []string
+}
 
-// LeagueJobs calls League's careers page and parses results based on specific css selectors
-func LeagueJobs() []Job {
+// NewLeagueSearch returns the default LeagueSearch
+func NewLeagueSearch() *LeagueSearch {
+	return &LeagueSearch{
+		URL:         "https://league.com/ca/careers-at-league/jobs/",
+		wordFilters: []string{"Director", "Senior", "Manager"},
+	}
+}
+
+// Jobs calls League's careers page and parses results based on specific css selectors
+func (l *LeagueSearch) Jobs() []Job {
 	var jobArray []Job
-	doc := getDocument(leagueURL)
-	jobs := getJobs(doc)
-	filteredJobs := filterJobs(jobs, strings.Split(wordFilters, ","))
-	listOfURLs := extractURLs(filteredJobs)
+	doc := l.getDocument(l.URL)
+	jobs := l.getJobs(doc)
+	filteredJobs := l.filterJobs(jobs, l.wordFilters)
+	listOfURLs := l.extractURLs(filteredJobs)
 	for _, v := range listOfURLs {
-		jobArray = append(jobArray, getJobPosting(v))
+		jobArray = append(jobArray, l.getJobPosting(v))
 	}
 	return jobArray
 }
 
-func getDocument(URL string) *goquery.Document {
+func (l *LeagueSearch) getDocument(URL string) *goquery.Document {
 	doc, err := goquery.NewDocument(URL)
 	if err != nil {
 		log.Fatal(err)
@@ -33,7 +42,7 @@ func getDocument(URL string) *goquery.Document {
 	return doc
 }
 
-func getJobs(doc *goquery.Document) *goquery.Selection {
+func (l *LeagueSearch) getJobs(doc *goquery.Document) *goquery.Selection {
 	results := doc.Find(".job-openings__container__jobs__job").FilterFunction(
 		func(i int, s *goquery.Selection) bool {
 			for _, v := range s.Children().Nodes {
@@ -46,7 +55,7 @@ func getJobs(doc *goquery.Document) *goquery.Selection {
 	return results.Find(".job-openings__container__jobs--list").Children()
 }
 
-func filterJobs(jobs *goquery.Selection, wordFilters []string) *goquery.Selection {
+func (l *LeagueSearch) filterJobs(jobs *goquery.Selection, wordFilters []string) *goquery.Selection {
 	return jobs.FilterFunction(
 		func(i int, s *goquery.Selection) bool {
 			for _, v := range wordFilters {
@@ -58,7 +67,7 @@ func filterJobs(jobs *goquery.Selection, wordFilters []string) *goquery.Selectio
 		})
 }
 
-func extractURLs(filteredJobs *goquery.Selection) []string {
+func (l *LeagueSearch) extractURLs(filteredJobs *goquery.Selection) []string {
 	return filteredJobs.Map(
 		func(i int, s *goquery.Selection) string {
 			link, ok := s.Attr("href")
@@ -69,12 +78,12 @@ func extractURLs(filteredJobs *goquery.Selection) []string {
 		})
 }
 
-func getJobPosting(url string) Job {
-	doc := getDocument(url)
+func (l *LeagueSearch) getJobPosting(url string) Job {
+	doc := l.getDocument(url)
 
-	title := getTitle(doc)
-	description := getDescription(doc)
-	requirementArr := getRequirements(doc)
+	title := l.getTitle(doc)
+	description := l.getDescription(doc)
+	requirementArr := l.getRequirements(doc)
 
 	return Job{
 		Company:        "League Inc.",
@@ -85,15 +94,15 @@ func getJobPosting(url string) Job {
 	}
 }
 
-func getTitle(doc *goquery.Document) string {
-	return getFieldFromMeta(doc, "og:title")
+func (l *LeagueSearch) getTitle(doc *goquery.Document) string {
+	return l.getFieldFromMeta(doc, "og:title")
 }
 
-func getDescription(doc *goquery.Document) string {
-	return getFieldFromMeta(doc, "og:description")
+func (l *LeagueSearch) getDescription(doc *goquery.Document) string {
+	return l.getFieldFromMeta(doc, "og:description")
 }
 
-func getFieldFromMeta(doc *goquery.Document, fieldName string) string {
+func (l *LeagueSearch) getFieldFromMeta(doc *goquery.Document, fieldName string) string {
 	selection := doc.Find("meta").FilterFunction(
 		func(i int, s *goquery.Selection) bool {
 			v, _ := s.Attr("property")
@@ -107,7 +116,7 @@ func getFieldFromMeta(doc *goquery.Document, fieldName string) string {
 	return field
 }
 
-func getRequirements(doc *goquery.Document) []string {
+func (l *LeagueSearch) getRequirements(doc *goquery.Document) []string {
 	var requirementArr []string
 	requirementSelection := doc.Find("ul.posting-requirements.plain-list > ul > li")
 	for _, n := range requirementSelection.Nodes {

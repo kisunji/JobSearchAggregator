@@ -73,11 +73,19 @@ func LocalHandler(w http.ResponseWriter, req *http.Request) {
 
 func getJobs() ([]byte, error) {
 	defer timeTrack(time.Now(), "getJobs")
+
+	services := []jobservice.JobSearch{
+		jobservice.NewAmazonSearch(),
+		jobservice.NewLeagueSearch(),
+		jobservice.NewShopifySearch(),
+	}
+
 	c := make(chan []jobservice.Job)
-	go func() { c <- jobservice.AmazonJobs() }()
-	go func() { c <- jobservice.LeagueJobs() }()
+	for _, v := range services {
+		go func(v jobservice.JobSearch) { c <- v.Jobs() }(v)
+	}
 	var jobArray []jobservice.Job
-	for i := 0; i < 2; i++ {
+	for i := 0; i < len(services); i++ {
 		result := <-c
 		jobArray = append(jobArray, result...)
 	}

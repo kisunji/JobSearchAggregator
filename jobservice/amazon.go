@@ -10,10 +10,19 @@ import (
 	"strings"
 )
 
-const (
-	amazonURL     = "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent"
-	amazonBaseURL = "https://www.amazon.jobs"
-)
+// AmazonSearch holds the search URL and base URL
+type AmazonSearch struct {
+	SearchURL string
+	BaseURL   string
+}
+
+// NewAmazonSearch returns the default AmazonSearch
+func NewAmazonSearch() *AmazonSearch {
+	return &AmazonSearch{
+		SearchURL: "https://www.amazon.jobs/en/search.json?base_query=&category[]=software-development&job_function_id[]=job_function_corporate_80rdb4&=&normalized_location[]=Toronto,+Ontario,+CAN&offset=0&query_options=&radius=24km&region=&result_limit=200&sort=recent",
+		BaseURL:   "https://www.amazon.jobs",
+	}
+}
 
 // amazonJob holds a subset of fields I care about
 type amazonJob struct {
@@ -32,17 +41,17 @@ type amazonJobList struct {
 	Jobs []amazonJob
 }
 
-// AmazonJobs calls Amazon's job search API and applies custom filters to show only relevant job postings
-func AmazonJobs() []Job {
+// Jobs calls Amazon's job search API and applies custom filters to show only relevant job postings
+func (a *AmazonSearch) Jobs() []Job {
 	var jobArray []Job
-	responseBody := callAPI(amazonURL)
-	jobList := convertToJSONList(responseBody)
+	responseBody := a.callAPI(a.SearchURL)
+	jobList := a.convertToJSONList(responseBody)
 
-	suitableJobs := filter(jobList.Jobs, isRecent, isSuitable)
+	suitableJobs := a.filter(jobList.Jobs, a.isRecent, a.isSuitable)
 
 	for _, v := range suitableJobs {
-		qualifications := processQualifications(v.Qualifications)
-		prefQualifications := processQualifications(v.PreferredQualifications)
+		qualifications := a.processQualifications(v.Qualifications)
+		prefQualifications := a.processQualifications(v.PreferredQualifications)
 
 		jobArray = append(jobArray, Job{
 			Company:                 "Amazon",
@@ -50,13 +59,13 @@ func AmazonJobs() []Job {
 			Qualifications:          qualifications,
 			PreferredQualifications: prefQualifications,
 			Description:             v.Description,
-			URL:                     amazonBaseURL + v.URL,
+			URL:                     a.BaseURL + v.URL,
 		})
 	}
 	return jobArray
 }
 
-func callAPI(url string) []byte {
+func (a *AmazonSearch) callAPI(url string) []byte {
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -69,7 +78,7 @@ func callAPI(url string) []byte {
 	return body
 }
 
-func convertToJSONList(bytes []byte) amazonJobList {
+func (a *AmazonSearch) convertToJSONList(bytes []byte) amazonJobList {
 	if !json.Valid(bytes) {
 		log.Fatal("Not a valid Json")
 	}
@@ -83,7 +92,7 @@ func convertToJSONList(bytes []byte) amazonJobList {
 
 // filters based on any number of predicates
 // most restrictive filter (likely to false) should be passed first
-func filter(vs []amazonJob, fs ...func(amazonJob) bool) []amazonJob {
+func (a *AmazonSearch) filter(vs []amazonJob, fs ...func(amazonJob) bool) []amazonJob {
 	vsf := make([]amazonJob, 0)
 	// TODO: Could replace inner loop with goroutines
 OUTER:
@@ -98,7 +107,7 @@ OUTER:
 	return vsf
 }
 
-func isSuitable(j amazonJob) bool {
+func (a *AmazonSearch) isSuitable(j amazonJob) bool {
 	// Positions containing these words are generally not suitable
 	if strings.Contains(j.Title, "Manager") ||
 		strings.Contains(j.Title, "Senior") ||
@@ -115,7 +124,7 @@ func isSuitable(j amazonJob) bool {
 	return true
 }
 
-func isRecent(j amazonJob) bool {
+func (a *AmazonSearch) isRecent(j amazonJob) bool {
 	// Make sure job was updated within last 2 months
 	if strings.Contains(j.TimeSinceLastUpdated, "month") {
 		re := regexp.MustCompile(`[0-9]+`)
@@ -133,7 +142,7 @@ func isRecent(j amazonJob) bool {
 	return true
 }
 
-func processQualifications(rawQualifications string) []string {
+func (a *AmazonSearch) processQualifications(rawQualifications string) []string {
 	var result []string
 
 	// Trim unwanted bullet rune from raw string

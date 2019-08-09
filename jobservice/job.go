@@ -9,3 +9,8 @@ type Job struct {
 	PreferredQualifications []string
 	URL                     string
 }
+
+//JobSearch returns slice of Jobs
+type JobSearch interface {
+	Jobs() []Job
+}
